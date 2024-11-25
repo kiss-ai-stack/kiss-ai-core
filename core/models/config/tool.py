@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from core.models.config.ai import AIProperties
+from core.models.config.ai_client import AIClientProperties
 from core.models.enums import ToolKind
 
 
@@ -8,7 +8,8 @@ class ToolProperties(BaseModel):
     name: str
     role: str
     kind: ToolKind
-    ai: AIProperties
+    ai: AIClientProperties
+    embeddings: str
 
     class Config:
         str_min_length = 1

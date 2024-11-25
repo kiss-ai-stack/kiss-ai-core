@@ -2,13 +2,14 @@ from typing import List
 
 from pydantic import BaseModel
 
-from core.models.config.store import StoreProperties
+from core.models.config.db import VectorDBProperties
 from core.models.config.tool import ToolProperties
 
 
 class AgentProperties(BaseModel):
+    classifier: ToolProperties
     tools: List[ToolProperties]
-    store: StoreProperties
+    vector_db: VectorDBProperties
 
     class Config:
         str_min_length = 1

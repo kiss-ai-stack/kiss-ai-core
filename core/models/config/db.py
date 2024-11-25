@@ -2,12 +2,12 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from core.models.enums import StoreKind
+from core.models.enums import VectorDBKind
 
 
-class StoreProperties(BaseModel):
+class VectorDBProperties(BaseModel):
     provider: str
-    kind: StoreKind
+    kind: VectorDBKind
     path: Optional[str] = None
 
     class Config:

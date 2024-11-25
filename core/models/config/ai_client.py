@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 
 
-class AIProperties(BaseModel):
+class AIClientProperties(BaseModel):
     provider: str
     model: str
     host: str
+    api_key: str
 
     class Config:
         str_min_length = 1

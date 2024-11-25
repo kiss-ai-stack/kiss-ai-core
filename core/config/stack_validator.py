@@ -17,8 +17,10 @@ class StackValidator:
         if 'agent' not in data:
             raise ValueError("Missing 'agent' section in YAML.")
         agent_data = data['agent']
-        if 'tools' not in agent_data or not isinstance(agent_data['tools'], list):
-            raise ValueError("Missing or invalid 'tools' section in 'agent'. It must be a list.")
+        if 'classifier' not in agent_data:
+            raise ValueError("Missing or invalid 'classifier' section in 'agent'.")
+        if 'ai_clients' not in agent_data or not isinstance(agent_data['ai_clients'], list):
+            raise ValueError("Missing or invalid 'ai_clients' section in 'agent'. It must be a list.")
 
         try:
             agent = AgentProperties(**agent_data)
