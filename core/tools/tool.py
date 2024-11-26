@@ -33,4 +33,4 @@ class Tool:
         )
 
     def process_prompt(self, query):
-        pass
+        return

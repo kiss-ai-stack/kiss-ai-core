@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 
+from core.models.enums.ai_client_vendor import AIClientVendor
+
 
 class AIClientProperties(BaseModel):
-    provider: str
+    provider: AIClientVendor
     model: str
-    host: str
     api_key: str
 
     class Config:

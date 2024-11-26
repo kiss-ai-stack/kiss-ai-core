@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 
 class AIClientAbc(ABC):
@@ -17,5 +17,5 @@ class AIClientAbc(ABC):
         pass
 
     @abstractmethod
-    def generate_answer(self, query: str, chunks: List[str]) -> str:
+    def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
         pass
