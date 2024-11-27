@@ -10,7 +10,8 @@ from core.models.enums import ToolKind
 
 class OpenAIClient(AIClientAbc):
 
-    def __init__(self, properties: AIClientProperties):
+    def __init__(self, properties: AIClientProperties, tool_kind: ToolKind = ToolKind.PROMPT):
+        self.__tool_kind = tool_kind
         self.__properties = properties
         self.__client = None
 
@@ -32,7 +33,7 @@ class OpenAIClient(AIClientAbc):
         prompt = ''
         base_content = ''
 
-        if self.__properties.model == ToolKind.RAG:
+        if self.__tool_kind == ToolKind.RAG:
             if chunks is None:
                 chunks = []
             context = '\n\n'.join(chunks)
@@ -47,7 +48,7 @@ class OpenAIClient(AIClientAbc):
             {query}
             
             Answer:'''
-        elif self.__properties.model == ToolKind.PROMPT:
+        elif self.__tool_kind == ToolKind.PROMPT:
             base_content = 'You are a helpful assistant that responds to any given prompt.'
             prompt = query
         else:
