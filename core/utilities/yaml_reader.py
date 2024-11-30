@@ -25,13 +25,13 @@ class YamlReader:
             try:
                 self.__file_obj = open(self.__file_path, 'r')
             except FileNotFoundError:
-                LOG.error(f"Error: File '{self.__file_path}' not found.")
-                raise FileNotFoundError(f"File '{self.__file_path}' not found.")
+                LOG.error(f'Error: File \'{self.__file_path}\' not found.')
+                raise FileNotFoundError(f'File \'{self.__file_path}\' not found.')
 
         try:
             return yaml.safe_load(self.__file_obj)
         except yaml.YAMLError as e:
-            LOG.error(f"Error parsing YAML file: {e}")
+            LOG.error(f'Error parsing YAML file: {e}')
             raise
 
     def __enter__(self):

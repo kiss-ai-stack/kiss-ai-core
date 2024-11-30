@@ -1,10 +1,10 @@
 import logging
 
 
-class AiStackLogger:
+class AIStackLogger:
 
     def __init__(self, log_level=logging.INFO):
-        self.logger = logging.getLogger('AiStackLogger')
+        self.logger = logging.getLogger('AIStackLogger')
         if not self.logger.hasHandlers():  # Prevent duplicate handlers
             handler = logging.StreamHandler()
             formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -25,4 +25,4 @@ class AiStackLogger:
         self.logger.warning(message)
 
 
-LOG = AiStackLogger()
+LOG = AIStackLogger()

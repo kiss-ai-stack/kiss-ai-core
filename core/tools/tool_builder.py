@@ -3,27 +3,63 @@ from core.dbs.db_factory import VectorDBFactory
 from core.models.config import ToolProperties, VectorDBProperties
 from core.models.enums import ToolKind
 from core.tools.tool import Tool
+from core.utilities.logger import LOG
 
 
 class ToolBuilder:
+    """
+    A builder class responsible for constructing instances of `Tool` based on provided configuration properties.
+
+    The `ToolBuilder` class abstracts the process of initializing and configuring tools, including their associated AI clients
+    and optional vector databases. This class is used to build tools based on specified `ToolProperties` and `VectorDBProperties`.
+    """
 
     @staticmethod
-    def build_tool(tool_properties: ToolProperties, vector_db_properties: VectorDBProperties) -> Tool:
-        ai_client = AIClientFactory.get_ai_client(tool_properties.ai_client, tool_properties.kind)
-        ai_client.initialize()
+    def build_tool(
+            tool_properties: ToolProperties,
+            vector_db_properties: VectorDBProperties
+    ) -> Tool:
+        """
+        Builds a `Tool` instance based on the provided tool and vector DB properties.
 
-        if tool_properties.kind == ToolKind.RAG:
-            return Tool(
-                tool_kind=tool_properties.kind,
-                ai_client=ai_client,
-                vector_db=VectorDBFactory.get_vector_db(
+        This method uses the `AIClientFactory` to initialize the AI client and the `VectorDBFactory` to initialize
+        the vector database (if the tool kind requires it). Once initialized, it returns a `Tool` instance with
+        the appropriate configuration.
+
+        Args:
+            tool_properties (ToolProperties): The properties defining the tool, including AI client and tool kind.
+            vector_db_properties (VectorDBProperties): The properties for the vector database if the tool requires one.
+
+        Returns:
+            Tool: A configured `Tool` instance, either with or without a vector database, depending on the tool kind.
+        """
+        try:
+            LOG.info(f'Tool Builder :: Building {tool_properties.name}, kind: {tool_properties.kind}')
+            ai_client = AIClientFactory.get_ai_client(
+                tool_properties.ai_client, tool_properties.kind
+            )
+            ai_client.initialize()
+
+            if tool_properties.kind == ToolKind.RAG:
+                LOG.info(f'Tool Builder :: Initializing Vector DB for {tool_properties.name}')
+                vector_db = VectorDBFactory.get_vector_db(
                     collection_name=f'{tool_properties.name}_collection',
                     embedding_function=ai_client.embedding_function(tool_properties.embeddings),
                     properties=vector_db_properties
                 )
-            )
-        else:
-            return Tool(
-                tool_kind=tool_properties.kind,
-                ai_client=ai_client
-            )
+                vector_db.initialize()
+                LOG.info(f'Tool Builder :: Tool {tool_properties.name} built successfully with RAG capabilities.')
+                return Tool(
+                    tool_kind=tool_properties.kind,
+                    ai_client=ai_client,
+                    vector_db=vector_db
+                )
+            else:
+                LOG.info(f'Tool Builder :: Tool {tool_properties.name} built successfully without RAG capabilities.')
+                return Tool(
+                    tool_kind=tool_properties.kind,
+                    ai_client=ai_client
+                )
+        except Exception as e:
+            LOG.error(f'Tool Builder :: Error occurred while building the tool {tool_properties.name}: {str(e)}')
+            raise e

@@ -1,7 +1,9 @@
 import os
+
 from core.config import StackValidator
 from core.models.config import AgentProperties
 from core.utilities import YamlReader
+
 
 def stack_properties(stack_config_env_var: str = 'STACK_CONFIG', default_file: str = 'stack.yaml') -> AgentProperties:
     """

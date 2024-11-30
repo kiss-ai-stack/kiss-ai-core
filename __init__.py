@@ -1,5 +1,9 @@
 from core.agent.agent_stack import AgentStack
 
-agent = AgentStack()
-agent.initialize_stack()
-print(agent.process_query('what is 1 + 1?'))
+try:
+    agent = AgentStack()
+    agent.initialize_stack()
+    agent.store_documents(['/home/lpsandaruwan/Desktop/kiss-ai-stack/resume.pdf'])
+    print(agent.process_query('Give a summary about Lahiru').answer)
+except Exception as ex:
+    raise ex
