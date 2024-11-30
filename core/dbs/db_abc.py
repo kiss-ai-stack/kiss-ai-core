@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
+from core.models.enums.ai_client_vendor import AIClientVendor
+
 
 class VectorDBAbc(ABC):
     """
@@ -11,12 +13,17 @@ class VectorDBAbc(ABC):
     """
 
     @abstractmethod
-    def initialize(self):
+    def initialize(self, embedding_api_key: str, embedding_model: str, ai_vendor: AIClientVendor):
         """
         Initialize the vector database.
 
         This method should handle the setup of the database connection
         and prepare any necessary configurations for use.
+
+        Args:
+            ai_vendor(str): AI provider, ex: openai.
+            embedding_model(str): Embedding generation model.
+            embedding_api_key(AIClientVendor): AI's API key for embeddings generation.
         """
         pass
 

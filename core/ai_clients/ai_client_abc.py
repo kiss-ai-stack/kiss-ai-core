@@ -31,19 +31,6 @@ class AIClientAbc(ABC):
         pass
 
     @abstractmethod
-    def embedding_function(self, embedding_model):
-        """
-        Get an embedding function for the specified model.
-
-        Args:
-            embedding_model (str): The name of the model to use for generating embeddings.
-
-        Returns:
-            A callable embedding function.
-        """
-        pass
-
-    @abstractmethod
     def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
         """
         Generate an answer for the given query.

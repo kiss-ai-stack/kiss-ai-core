@@ -44,10 +44,12 @@ class ToolBuilder:
                 LOG.info(f'Tool Builder :: Initializing Vector DB for {tool_properties.name}')
                 vector_db = VectorDBFactory.get_vector_db(
                     collection_name=f'{tool_properties.name}_collection',
-                    embedding_function=ai_client.embedding_function(tool_properties.embeddings),
                     properties=vector_db_properties
                 )
-                vector_db.initialize()
+                vector_db.initialize(
+                    embedding_api_key=tool_properties.ai_client.api_key,
+                    embedding_model=tool_properties.embeddings,
+                    ai_vendor=tool_properties.ai_client.provider)
                 LOG.info(f'Tool Builder :: Tool {tool_properties.name} built successfully with RAG capabilities.')
                 return Tool(
                     tool_kind=tool_properties.kind,

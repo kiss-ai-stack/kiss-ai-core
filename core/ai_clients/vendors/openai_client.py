@@ -1,7 +1,10 @@
 from typing import List, Optional
 
-from chromadb.utils.embedding_functions.openai_embedding_function import OpenAIEmbeddingFunction
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+    raise ImportError('OpenAI is not installed. Please install \'openai\' python package `pip install openai`.')
 
 from core.ai_clients.ai_client_abc import AIClientAbc
 from core.models.config import AIClientProperties
@@ -29,22 +32,6 @@ class OpenAIClient(AIClientAbc):
         self.__properties = properties
         self.__client = None
         LOG.info(f'OpenAIClient :: initialized with tool kind: {tool_kind}')
-
-    def embedding_function(self, embedding_model):
-        """
-        Get an embedding function for the specified model.
-
-        Args:
-            embedding_model (str): The model name for generating embeddings.
-
-        Returns:
-            Callable: The embedding function.
-        """
-        LOG.info(f'OpenAIClient :: creating embedding function for model: {embedding_model}')
-        return OpenAIEmbeddingFunction(
-            api_key=self.__properties.api_key,
-            model_name=embedding_model
-        )
 
     def instance(self):
         """

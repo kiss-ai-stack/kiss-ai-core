@@ -17,7 +17,6 @@ class VectorDBFactory:
 
     @staticmethod
     def get_vector_db(
-            embedding_function,
             collection_name: str,
             properties: VectorDBProperties
     ) -> VectorDBAbc | None:
@@ -29,7 +28,6 @@ class VectorDBFactory:
         database client.
 
         Args:
-            embedding_function: The embedding function to be used for the database client.
             collection_name (str): The name of the collection to be accessed or created.
             properties (VectorDBProperties): Configuration properties for the vector database client.
 
@@ -51,7 +49,6 @@ class VectorDBFactory:
             case VectorDBVendor.CHROMA:
                 return ChromaVectorDB(
                     collection_name=collection_name,
-                    embedding_function=embedding_function,
                     properties=properties
                 )
         return None
