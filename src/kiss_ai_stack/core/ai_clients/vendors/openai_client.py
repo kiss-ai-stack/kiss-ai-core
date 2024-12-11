@@ -111,3 +111,8 @@ class OpenAIClient(AIClientAbc):
         answer = response.choices[0].message.content
         LOG.info('OpenAIClient :: generated answer: ****')
         return answer
+
+    def destroy(self):
+        if hasattr(self.__client, 'destroy'):
+            self.__client.close()
+            LOG.info('OpenAIClient :: Closed')

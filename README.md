@@ -62,19 +62,19 @@ agent:
 Once the core is installed, you can use it to build and interact with your AI agent as shown in the example below:
 
 ```python
-from kiss_ai_stack.core.agent import AgentStack
+from kiss_ai_stack.core.agent import Agent
 
 try:
     # Initialize the AI agent stack
-    agent = AgentStack()
+    agent = Agent()
     agent.initialize_stack()  # Set up the agent using the provided configuration
-    
+
     # Store documents for the agent to process
     agent.store_documents(['./yourfile.pdf'])
-    
+
     # Process a query and get the answer
     print(agent.process_query('Give a summary about yourfile contents.').answer)
-    
+
 except Exception as ex:
     print(f"An error occurred: {ex}")
     raise ex

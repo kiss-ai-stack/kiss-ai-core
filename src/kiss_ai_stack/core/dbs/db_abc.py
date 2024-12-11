@@ -55,3 +55,10 @@ class VectorDBAbc(ABC):
             dict: A dictionary containing the retrieved documents and associated metadata.
         """
         pass
+
+    @abstractmethod
+    def destroy(self):
+        """
+        Removes the collection in Vector Db.
+        """
+        pass

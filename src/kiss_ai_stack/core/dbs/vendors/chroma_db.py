@@ -135,3 +135,26 @@ class ChromaVectorDB(VectorDBAbc):
         except Exception as e:
             LOG.error(f'ChromaVectorDB :: Error retrieving results from collection \'{self.__collection_name}\'')
             raise e
+
+    def destroy(self):
+        """
+        Completely delete the current ChromaDB collection.
+
+        Raises:
+            Exception: If deletion fails or collection is already None
+        """
+        try:
+            if self.__collection is None:
+                LOG.warning(f'ChromaVectorDB :: No collection \'{self.__collection_name}\' exists to delete.')
+                return
+            doc_count = self.__collection.count()
+            LOG.info(
+                f'ChromaVectorDB :: Attempting to delete collection \'{self.__collection_name}\' with {doc_count} documents.')
+
+            self.__client.delete_collection(name=self.__collection_name)
+            self.__collection = None
+            self.__embedding_function = None
+            LOG.info(f'ChromaVectorDB :: Collection \'{self.__collection_name}\' successfully deleted.')
+        except Exception as e:
+            LOG.error(f'ChromaVectorDB :: Failed to delete collection \'{self.__collection_name}\': {e}')
+            raise e

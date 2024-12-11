@@ -1,238 +1,152 @@
-import os
-from typing import Dict, List, Union
+import functools
+from typing import Dict, List, Optional, Union, Callable, TypeVar
 
-from pydantic import BaseModel
-
-from kiss_ai_stack.core.ai_clients.ai_client_abc import AIClientAbc
-from kiss_ai_stack.core.ai_clients.ai_client_factory import AIClientFactory
-from kiss_ai_stack.core.config.stack_properties import stack_properties
-from kiss_ai_stack.core.models.config.agent import AgentProperties
-from kiss_ai_stack.core.models.core.query_classification_response import QueryClassificationResponse
+from kiss_ai_stack.core.agent.agent import Agent
 from kiss_ai_stack.core.models.core.rag_response import ToolResponse
-from kiss_ai_stack.core.tools.tool import Tool
-from kiss_ai_stack.core.tools.tool_builder import ToolBuilder
-from kiss_ai_stack.core.utilities.document_utils import file_to_docs
-from kiss_ai_stack.core.utilities.logger import LOG
+from kiss_ai_stack.core.utilities import LOG
+
+T = TypeVar('T')
+
 
 
 class AgentStack:
+    """
+    A centralized management class for creating, initializing, and interacting with agents.
+    """
 
-    def __init__(self):
-        """
-        Initialize placeholders for stack components.
-        Actual initialization happens in `initialize_stack`.
-        """
-        LOG.debug('AgentStack :: Initializing stack placeholders')
-        self.__stack_properties: AgentProperties | None = None
-        self.__classifier: AIClientAbc | None = None
-        self.__tool_roles: Dict[str, str] = {}
-        self.__tools: Dict[str, Tool] = {}
-        self.__initialized: bool = False
+    __agents: Dict[str, Agent] = {}
 
-    def __check_initialized(self):
+    @staticmethod
+    def _require_agent(func: Callable[..., T]) -> Callable[..., T]:
         """
-        Ensure the stack is fully initialized before usage.
-        """
-        LOG.debug('AgentStack :: Checking initialization status')
-        if not self.__initialized:
-            LOG.error('AgentStack :: Initialization check failed')
-            raise RuntimeError('AgentStack has not been initialized. Call `initialize_stack` first.')
-
-    def __initialize_stack_properties(self):
-        """
-        Load stack properties from the configuration.
-        """
-        LOG.info('AgentStack :: Initializing stack properties')
-        self.__stack_properties = stack_properties()
-        LOG.debug(f'AgentStack :: Stack properties loaded: {self.__stack_properties}')
-
-    def __initialize_classifier(self):
-        """
-        Initialize the AI classifier client.
-        """
-        LOG.info('AgentStack :: Initializing classifier')
-        if self.__stack_properties:
-            self.__classifier = AIClientFactory.get_ai_client(
-                self.__stack_properties.classifier.ai_client, self.__stack_properties.classifier.kind)
-            self.__classifier.initialize()
-            LOG.debug(f'AgentStack :: Classifier initialized: {self.__classifier}')
-
-    def __initialize_tools(self):
-        """
-        Initialize tools and map their roles.
-        """
-        LOG.info('AgentStack :: Initializing tools')
-        for tool_properties in self.__stack_properties.tools:
-            LOG.debug(f'AgentStack :: Initializing tool: {tool_properties.name}')
-            self.__tool_roles[tool_properties.name] = tool_properties.role
-            self.__tools[tool_properties.name] = ToolBuilder.build_tool(
-                tool_properties=tool_properties,
-                vector_db_properties=self.__stack_properties.vector_db
-            )
-        LOG.debug(f'AgentStack :: Tools initialized: {self.__tools.keys()}')
-
-    def initialize_stack(self):
-        """
-        Initialize the entire stack, including properties, classifier, and tools.
-        """
-        LOG.info('AgentStack :: Starting stack initialization')
-        self.__initialize_stack_properties()
-        self.__initialize_classifier()
-        self.__initialize_tools()
-        self.__initialized = True
-        LOG.info('AgentStack :: Stack initialization completed')
-
-    def classify_query(
-            self,
-            query: Union[str, Dict, List, BaseModel],
-            classification_type: str = 'default'
-    ) -> Union[str, QueryClassificationResponse]:
-        """
-        Classify the input query into one of the tool roles.
+        Decorator to validate agent existence before method execution.
 
         Args:
-            query: Input query to classify. Can be string, dictionary, list, or Pydantic model.
-            classification_type: Specifies the classification approach.
+            func (Callable): Method to be decorated
 
         Returns:
-            Classified tool name or detailed classification response.
+            Callable: Decorated method with agent existence check
+
+        Raises:
+            KeyError: If the specified agent does not exist
         """
-        LOG.info('AgentStack :: Classifying query')
-        LOG.debug(f'AgentStack :: Query: **** , Type: {classification_type}')
-        self.__check_initialized()
 
-        def normalize_input(input_data):
-            if isinstance(input_data, str):
-                return input_data
-            elif isinstance(input_data, dict):
-                return ' '.join(f'{k}: {v}' for k, v in input_data.items())
-            elif isinstance(input_data, list):
-                return ' '.join(str(item) for item in input_data)
-            elif hasattr(input_data, 'dict'):
-                return ' '.join(f'{k}: {v}' for k, v in input_data.dict().items())
-            else:
-                return str(input_data)
+        @functools.wraps(func)
+        def wrapper(cls, agent_id: str, *args, **kwargs):
+            if agent_id not in cls.__agents:
+                LOG.error(f'AgentStack :: No agent found with ID \'{agent_id}\'')
+                raise KeyError(f'AgentStack :: Agent \'{agent_id}\' not found')
+            return func(cls, agent_id, *args, **kwargs)
 
-        normalized_query = normalize_input(query)
-        role_definitions = '\n'.join(
-            [f'{name}: {role}' for name, role in self.__tool_roles.items()]
-        )
+        return wrapper
 
-        if classification_type == 'detailed':
-            prompt = f"""
-               Carefully classify the following input into one of the tool categories.
-
-               Available Categories: {', '.join(self.__tool_roles.values())}
-
-               Category Definitions: 
-               {role_definitions}
-
-               Input: "{normalized_query}"
-
-               Provide your response in the following format:
-               - tool_name: [Selected tool name]
-               - confidence: [Confidence score from 0.0 to 1.0]
-               - reasoning: [Brief explanation of classification]
-               """
-            LOG.debug('AgentStack :: Classification prompt (detailed): ****')
-            detailed_response = self.__classifier.generate_answer(query=prompt)
-            LOG.debug('AgentStack :: Detailed classification response: ****')
-
-            try:
-                response_lines = detailed_response.split('\n')
-                tool_name = response_lines[0].split(':')[1].strip()
-                confidence = float(response_lines[1].split(':')[1].strip())
-                reasoning = response_lines[2].split(':')[1].strip()
-
-                return QueryClassificationResponse(
-                    tool_name=tool_name,
-                    confidence=confidence,
-                    reasoning=reasoning
-                )
-            except Exception:
-                LOG.warning('AgentStack :: Default classification fallback')
-                return self.classify_query(query, 'default')
-
-        prompt = f"""
-           Classify the following input into one of the categories: {', '.join(self.__tool_roles.values())}.
-
-           Category definitions: 
-           {role_definitions}
-
-           Input: "{normalized_query}"
-
-           Please return only the category name, without any extra text or prefix.
-           """
-        LOG.debug('AgentStack :: Classification prompt (default): ****')
-        response = self.__classifier.generate_answer(query=prompt)
-        LOG.debug('AgentStack :: Classification result: ****')
-        return response
-
-    def process_query(self, query: str) -> ToolResponse:
+    @classmethod
+    def bootstrap_agent(cls, agent_id: str) -> None:
         """
-        Process the input query, classify it, and use the appropriate tool.
-        """
-        LOG.info('AgentStack :: Processing query: ****')
-        self.__check_initialized()
-
-        tool_name = self.classify_query(query)
-        LOG.debug(f'AgentStack :: Classified tool: {tool_name}')
-        if tool_name not in self.__tools:
-            LOG.error(f'AgentStack :: No tool found for role: {tool_name}')
-            raise ValueError(f'No tool found for the classified role \'{tool_name}\'.')
-
-        response = self.__tools[tool_name].process_query(query)
-        LOG.debug('AgentStack :: Query processed. Response: ****')
-        return response
-
-    def store_documents(self, files: List[str], classify_document: bool = True) -> Dict[str, List[str]]:
-        """
-        Store multiple documents in the appropriate vector database tool.
+        Initialize the stack for a specific agent.
 
         Args:
+            agent_id (str): Identifier of the agent to bootstrap
+
+        Raises:
+            RuntimeError: If stack initialization fails
+        """
+        try:
+            agent = Agent(agent_id=agent_id)
+            cls.__agents[agent_id] = agent
+            cls.__agents[agent_id].initialize_stack()
+            LOG.info(f'AgentStack :: Agent \'{agent_id}\' initialized successfully')
+        except Exception as e:
+            LOG.error(f'AgentStack :: Stack initialization failed for agent \'{agent_id}\': {e}')
+            raise
+
+    @classmethod
+    @_require_agent
+    def generate_answer(
+            cls,
+            agent_id: str,
+            query: Union[str, Dict, List]
+    ) -> Optional[ToolResponse]:
+        """
+        Generate an answer for a given query using a specific agent.
+
+        Args:
+            agent_id (str): Identifier of the agent to use
+            query (Union[str, Dict, List]): Input query to process
+
+        Returns:
+            Optional[ToolResponse]: Response from the agent's query processing
+
+        Raises:
+            ValueError: If query processing fails
+        """
+        try:
+            response = cls.__agents[agent_id].process_query(query)
+            LOG.info(f'AgentStack :: Query processed successfully for agent \'{agent_id}\'')
+            return response
+        except Exception as e:
+            LOG.error(f'AgentStack :: Query processing failed for agent \'{agent_id}\': {e}')
+            raise
+
+    @classmethod
+    @_require_agent
+    def store_data(
+            cls,
+            agent_id: str,
+            files: List[str],
+            classify_document: bool = True
+    ) -> Dict[str, List[str]]:
+        """
+        Store documents for a specific agent.
+
+        Args:
+            agent_id (str): Identifier of the agent to use
             files (List[str]): List of file paths to store
-            classify_document (bool): Whether to classify each document before storing
+            classify_document (bool, optional): Whether to classify documents. Defaults to True.
 
         Returns:
-            Dict[str, List[str]]: Dictionary of tool names and their stored document IDs
+            Dict[str, List[str]]: Dictionary of stored document IDs per tool
+
+        Raises:
+            ValueError: If document storage fails
         """
-        LOG.info('AgentStack :: Storing documents')
-        LOG.debug(f'AgentStack :: Files to store: {files}')
-        self.__check_initialized()
+        try:
+            stored_documents = cls.__agents[agent_id].store_documents(
+                files=files,
+                classify_document=classify_document
+            )
+            LOG.info(f'AgentStack :: Documents stored successfully for agent \'{agent_id}\'')
+            return stored_documents
+        except Exception as e:
+            LOG.error(f'AgentStack :: Document storage failed for agent \'{agent_id}\': {e}')
+            raise
 
-        stored_documents = {}
-        for file in files:
-            try:
-                LOG.debug(f'AgentStack :: Processing file: {file}')
-                chunks, metadata_list = file_to_docs(file)
+    @classmethod
+    @_require_agent
+    def get_agent(cls, agent_id: str) -> Optional[Agent]:
+        """
+        Retrieve a specific agent by its ID.
 
-                if classify_document:
-                    classify_input = ' '.join(chunks[:3]) if len(chunks) > 3 else ' '.join(chunks)
-                    if not classify_input:
-                        classify_input = os.path.basename(file)
-                    tool_name = self.classify_query(classify_input)
-                    LOG.debug(f'AgentStack :: Classified tool for file: {tool_name}')
-                else:
-                    tool_name = list(self.__tools.keys())[0] if self.__tools else None
+        Args:
+            agent_id (str): Identifier of the agent to retrieve
 
-                if not tool_name or tool_name not in self.__tools:
-                    LOG.error(f'AgentStack :: No tool found for document: {file}')
-                    raise ValueError(f'No tool found for document: {file}')
+        Returns:
+            Optional[Agent]: The agent instance if found, None otherwise
+        """
+        return cls.__agents.get(agent_id)
 
-                tool = self.__tools[tool_name]
-                document_ids = tool.store_docs(
-                    documents=chunks,
-                    metadata_list=metadata_list
-                )
-                if tool_name not in stored_documents:
-                    stored_documents[tool_name] = []
-                stored_documents[tool_name].extend(document_ids)
-                LOG.debug('AgentStack :: Stored document IDs: ****')
+    @classmethod
+    @_require_agent
+    def destroy_agent(cls, agent_id: str, cleanup = False):
+        """
+        Destroys an Agent and remove it from the agents list.
 
-            except Exception as e:
-                LOG.error(f'Error processing file {file}')
-                raise e
+        Args:
+            agent_id: Identifier of the agent to destroy.
+            cleanup: Prompt to remove user data if RAG tools present.
+        """
 
-        LOG.info('AgentStack :: Document storage completed')
-        LOG.debug('AgentStack :: Stored documents: ****')
-        return stored_documents
+        cls.__agents.get(agent_id).destroy_stack(cleanup)
+        del cls.__agents[agent_id]
+        LOG.info(f'AgentStack :: Agent\'{agent_id}\' closed successfully')
+        return

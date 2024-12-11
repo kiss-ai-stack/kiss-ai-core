@@ -105,3 +105,14 @@ class Tool:
         except Exception as e:
             LOG.error('Tool :: Failed to process query')
             raise e
+
+    def destroy(self, cleanup: bool = False):
+        """
+        Close connections and cleanup.
+
+        Args:
+            cleanup (bool): Prompt cleaning vector DB collection
+        """
+        if cleanup and self.__vector_db is not None:
+            self.__vector_db.destroy()
+        self.__ai_client.destroy()

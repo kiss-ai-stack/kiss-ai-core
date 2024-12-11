@@ -17,6 +17,7 @@ class ToolBuilder:
 
     @staticmethod
     def build_tool(
+            agent_id: str,
             tool_properties: ToolProperties,
             vector_db_properties: VectorDBProperties
     ) -> Tool:
@@ -28,6 +29,7 @@ class ToolBuilder:
         the appropriate configuration.
 
         Args:
+            agent_id (str) : Agent ID vector DB collection belongs to.
             tool_properties (ToolProperties): The properties defining the tool, including AI client and tool kind.
             vector_db_properties (VectorDBProperties): The properties for the vector database if the tool requires one.
 
@@ -36,15 +38,15 @@ class ToolBuilder:
         """
         try:
             LOG.info(f'Tool Builder :: Building {tool_properties.name}, kind: {tool_properties.kind}')
-            ai_client = AIClientFactory.get_ai_client(
-                tool_properties.ai_client, tool_properties.kind
-            )
+            ai_client = AIClientFactory.get_ai_client(tool_properties.ai_client, tool_properties.kind)
             ai_client.initialize()
 
             if tool_properties.kind == ToolKind.RAG:
-                LOG.info(f'Tool Builder :: Initializing Vector DB for {tool_properties.name}')
+                collection_name = f'{agent_id}_{tool_properties.name}_collection'
+                LOG.info(
+                    f'Tool Builder :: Initializing Vector DB for the tool {tool_properties.name}, collection: {collection_name}')
                 vector_db = VectorDBFactory.get_vector_db(
-                    collection_name=f'{tool_properties.name}_collection',
+                    collection_name=collection_name,
                     properties=vector_db_properties
                 )
                 vector_db.initialize(

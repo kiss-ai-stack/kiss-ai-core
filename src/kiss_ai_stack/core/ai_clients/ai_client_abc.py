@@ -44,3 +44,10 @@ class AIClientAbc(ABC):
             str: The generated response from the AI client.
         """
         pass
+
+    @abstractmethod
+    def destroy(self):
+        """
+        Close AI client's connection.
+        """
+        pass
