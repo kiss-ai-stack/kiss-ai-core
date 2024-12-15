@@ -13,7 +13,8 @@ class VectorDBAbc(ABC):
     """
 
     @abstractmethod
-    async def initialize(self, embedding_api_key: str, embedding_model: str, ai_vendor: AIClientVendor, tenant: Optional[str]=None):
+    async def initialize(self, embedding_api_key: str, embedding_model: str, ai_vendor: AIClientVendor,
+                         tenant: Optional[str] = None):
         """
         Initializes the vector database.
 

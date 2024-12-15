@@ -21,7 +21,8 @@ setup(
         "unstructured[xlsx]",
         "unstructured[pdf]",
         "unstructured[docx]",
-        "unstructured[csv]"
+        "unstructured[csv]",
+        "aiofiles~=24.1.0"
     ],
     keywords=["ai", "agent", "machine-learning", "llm", "document-processing"],
     classifiers=[

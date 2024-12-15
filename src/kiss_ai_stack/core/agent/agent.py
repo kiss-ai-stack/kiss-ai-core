@@ -20,8 +20,13 @@ class Agent:
 
     def __init__(self, agent_id, temporary: Optional[bool] = True):
         """
-        Initialize placeholders for stack components.
-        Actual initialization happens in `initialize_stack`.
+        Initialize an agent with placeholders for stack components.
+
+        This method sets up the agent with essential properties such as agent ID, stack properties, classifier,
+        tool roles, and tools. The actual initialization happens later when the `initialize_stack` method is called.
+
+        :param agent_id: The unique identifier for the agent.
+        :param temporary: Flag to indicate if the agent session is temporary, affecting docs persistance.
         """
         LOG.debug(f'Agent-{agent_id} :: agent ready!')
         self.__agent_id = agent_id
@@ -77,9 +82,6 @@ class Agent:
         LOG.debug(f'Agent-{self.__agent_id} :: Tools initialized')
 
     async def initialize_stack(self):
-        """
-        Initialize the entire stack, including properties, classifier, and tools.
-        """
         LOG.info(f'Agent-{self.__agent_id} :: Starting initialization')
         if not self.__initialized:
             await self.__initialize_stack_properties()
@@ -99,13 +101,11 @@ class Agent:
         """
         Classify the input query into one of the tool roles.
 
-        Args:
-            query: Input query to classify. Can be string, dictionary, list, or Pydantic model.
-            rag: If True, only consider RAG-type tools for classification.
-            classification_type: Specifies the classification approach.
+        :param query: Input query to classify. Can be string, dictionary, list, or Pydantic model.
+        :param rag: If True, only consider RAG-type tools for classification.
+        :param classification_type: Specifies the classification approach.
 
-        Returns:
-            Classified tool name or detailed classification response.
+        :returns: Classified tool name or detailed classification response.
         """
         LOG.info(f'Agent-{self.__agent_id} :: Classifying query')
         LOG.debug(f'Agent-{self.__agent_id} :: Query: **** , Type: {classification_type}')
@@ -195,6 +195,9 @@ class Agent:
     async def process_query(self, query: str) -> ToolResponse:
         """
         Process the input query, classify it, and use the appropriate tool.
+
+        :param query: User prompt or query
+        :returns: Generated answer
         """
         LOG.info(f'Agent-{self.__agent_id} :: Processing query: ****')
         self.__check_initialized()
@@ -218,14 +221,11 @@ class Agent:
         """
         Store multiple documents in the appropriate vector database tool.
 
-        Args:
-            files (List[str]): List of file paths to store
-            metadata (Optional[Dict[str, Any]]): Optional metadata to associate with documents
-            classify_document (bool): Whether to classify each document before storing
+        :param files: (List[str]): List of file paths to store
+        :param metadata: (Optional[Dict[str, Any]]): Optional metadata to associate with documents
+        :param classify_document: (bool): Whether to classify each document before storing
 
-        Returns:
-            Dict[str, Union[List[str], str]]:
-            Dictionary containing stored document IDs and optional query response
+        :returns Dict[str, Union[List[str], str]]: Dictionary containing stored document IDs and optional query response
         """
         LOG.info(f'Agent-{self.__agent_id} :: Storing documents')
         LOG.debug(f'Agent-{self.__agent_id} :: Files to store: {files}')
@@ -284,6 +284,8 @@ class Agent:
     async def destroy_stack(self, cleanup: bool = False):
         """
         Destroy and clean up the agent's stack components.
+
+        :param cleanup: Clean stored docs, preferably for temporary sessions.
         """
         LOG.info(f'Agent-{self.__agent_id} :: Starting destruction')
 

@@ -1,27 +1,38 @@
+<div style="text-align: center; margin-bottom: 20px;">
+  <img src="https://kiss-ai-stack.github.io/kissaistack.svg" alt="KISS AI Stack Banner" style="max-width: auto; height: 20%;">
+</div>
 
-# kiss-ai-stack - Core
+# KISS AI Stack - Core
 
-**KISS AI Stack's AI Agent Builder**
+**Effortless AI Agent Building**
 
-Welcome to the core of the **KISS AI Stack**! This module helps you build AI agents effortlessly, using a simple YAML configuration file. With this core, you don't need to worry about boilerplate code. It is designed to keep things minimal and efficient, following the **KISS principle** (Keep It Simple, Stupid).
+Welcome to the core of the **KISS AI Stack**! This module helps you build an AI agent effortlessly using a simple YAML configuration file. Say goodbye to boilerplate code and embrace minimalism with the **KISS principle** (Keep It Simple, Stupid).
 
-### Features:
-- **Build AI agents quickly**: Just provide a YAML file to configure the agent.
-- **Minimal dependencies**: Built using simple, vanilla vendor libraries.
-- **Tool classification**: Easily configure tools for your agent to handle specific tasks.
-- **Supports RAG and prompt-based models**: Choose the model type that suits your needs.
+---
 
-### Installation
+## Features
 
-To install the core module, run:
+- **Centralized Agent Management**: Manage multiple session-based AI agents with lifecycle support.
+- **Minimal Dependencies**: Built using simple, vanilla vendor libraries.
+- **Tool Classification**: Configure tools for your agent to handle specific tasks easily.
+- **Supports RAG and Prompt-Based Models**: Choose the model type that suits your needs.
+- **Thread-Safe**: Reliable operation in multi-threaded environments.
+
+---
+
+## Installation
+
+Install the core module using pip:
 
 ```bash
 pip install kiss-ai-stack-core
 ```
 
-### Example Configuration
+---
 
-Below is an example YAML configuration for setting up an AI agent with different tools:
+## Example Configuration
+
+Here’s an example YAML configuration to set up an AI agent with different tools:
 
 ```yaml
 agent:
@@ -33,7 +44,7 @@ agent:
       provider: openai
       model: gpt-4
       api_key: <your-api-key>
-      
+
   tools:
     - name: general_queries
       role: process other queries if no suitable tool is found.
@@ -42,9 +53,9 @@ agent:
         provider: openai
         model: gpt-4
         api_key: <your-api-key>
-        
+
     - name: document_tool
-      role: Process documents and provide answers based on them.
+      role: process documents and provide answers based on them.
       kind: rag  # Retrieval-Augmented Generation
       embeddings: text-embedding-ada-002
       ai_client:
@@ -54,46 +65,71 @@ agent:
 
   vector_db:
     provider: chroma
-    kind: in_memory  # Choose in-memory or persistent storage options.
+    kind: remote # Choose in-memory, storage or remote options.
+    host: 0.0.0.0
+    port: 8000
+    secure: false
 ```
 
-### Example Python Usage
+---
 
-Once the core is installed, you can use it to build and interact with your AI agent as shown in the example below:
+## Example Python Usage
+
+Use the core module to build and interact with your AI agent:
 
 ```python
-from kiss_ai_stack.core.agent import Agent
+from kiss_ai_stack import AgentStack
 
-try:
-    # Initialize the AI agent stack
-    agent = Agent()
-    agent.initialize_stack()  # Set up the agent using the provided configuration
+async def main():
+    try:
+        # Initialize an agent in the stack
+        await AgentStack.bootstrap_agent(agent_id="my_agent", temporary=True)
 
-    # Store documents for the agent to process
-    agent.store_documents(['./yourfile.pdf'])
+        # Process a query
+        response = await AgentStack.generate_answer(agent_id="my_agent", query="What is KISS AI Stack?")
+        print(response.answer)
 
-    # Process a query and get the answer
-    print(agent.process_query('Give a summary about yourfile contents.').answer)
+    except Exception as ex:
+        print(f"An error occurred: {ex}")
 
-except Exception as ex:
-    print(f"An error occurred: {ex}")
-    raise ex
+# Run the example
+import asyncio
+asyncio.run(main())
 ```
 
-### How It Works:
-1. **Agent Setup**: The agent is initialized with the provided configuration (defined in the YAML file). The configuration specifies which AI clients and tools to use.
-2. **Tools**: Each tool is defined by its type (`prompt` or `rag`) and is linked to an AI client, such as OpenAI’s GPT-4. Tools handle different tasks like document processing or classifying queries.
-3. **Vector DB**: The `vector_db` section allows you to configure the database for storing and retrieving document embeddings. Currently, `Chroma` is supported as an in-memory solution.
+---
 
-### Documentation:
-- **AI Client**: You can configure the AI client with the provider, model, and API key for any supported service like OpenAI.
-- **Tools**: Define the tools that the agent will use, such as a general-purpose query tool or a document processing tool.
-- **Vector Database**: The `vector_db` section defines how the agent stores document embeddings and retrieves them for RAG-based tasks.
+## How It Works
 
-### Contributing
+1. **Agent Initialization**: Use `AgentStack.bootstrap_agent` to initialize agents with their configuration and resources.
+2. **Query Processing**: Process queries with `AgentStack.generate_answer`, leveraging tools and AI clients defined in the YAML configuration.
+3. **Tool Management**: Define tools to handle specific tasks like document processing or query classification.
+4. **Vector Database**: Use the `vector_db` section to define how document embeddings are stored and retrieved for RAG-based tasks. Currently, `Chroma` is supported.
 
-We welcome contributions! If you'd like to improve this stack, feel free to submit pull requests or open issues for discussion.
+---
 
-### License
+## Documentation
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+### Key Methods
+
+- `bootstrap_agent(agent_id: str, temporary: bool)`: Initialize a new agent session.
+- `generate_answer(agent_id: str, query: Union[str, Dict, List])`: Process a query and return a response.
+
+### Configuration Highlights
+
+- **AI Client**: Configure the provider, model, and API key for supported services like OpenAI.
+- **Tools**: Define tools such as general-purpose query handlers or document processors.
+- **Vector Database**: Set up in-memory or persistent storage for RAG-based tasks.
+
+---
+
+## Contributing
+
+We welcome contributions! Submit pull requests or open issues to improve this stack.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
