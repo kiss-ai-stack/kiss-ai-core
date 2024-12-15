@@ -1,8 +1,5 @@
 PyYAML~=6.0.2
 
-pydantic~=2.10.1
-# chromadb~=0.5.20
-# openai~=1.55.0
 fastapi~=0.115.5
 unstructured~=0.16.8
 tiktoken~=0.8.0
@@ -12,3 +9,7 @@ unstructured[pdf]
 unstructured[docx]
 unstructured[csv]
 pandas~=2.2.3
+
+pydantic~=2.10.3
+aiofiles~=24.1.0
+setuptools~=75.6.0

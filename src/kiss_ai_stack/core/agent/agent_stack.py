@@ -1,12 +1,11 @@
 import functools
-from typing import Dict, List, Optional, Union, Callable, TypeVar
+from typing import Dict, List, Optional, Union, Callable, TypeVar, Any
 
 from kiss_ai_stack.core.agent.agent import Agent
 from kiss_ai_stack.core.models.core.rag_response import ToolResponse
 from kiss_ai_stack.core.utilities import LOG
 
 T = TypeVar('T')
-
 
 
 class AgentStack:
@@ -41,7 +40,7 @@ class AgentStack:
         return wrapper
 
     @classmethod
-    def bootstrap_agent(cls, agent_id: str) -> None:
+    async def bootstrap_agent(cls, agent_id: str, temporary: Optional[bool] = True) -> None:
         """
         Initialize the stack for a specific agent.
 
@@ -52,9 +51,9 @@ class AgentStack:
             RuntimeError: If stack initialization fails
         """
         try:
-            agent = Agent(agent_id=agent_id)
+            agent = Agent(agent_id=agent_id, temporary=temporary)
             cls.__agents[agent_id] = agent
-            cls.__agents[agent_id].initialize_stack()
+            await cls.__agents[agent_id].initialize_stack()
             LOG.info(f'AgentStack :: Agent \'{agent_id}\' initialized successfully')
         except Exception as e:
             LOG.error(f'AgentStack :: Stack initialization failed for agent \'{agent_id}\': {e}')
@@ -62,7 +61,7 @@ class AgentStack:
 
     @classmethod
     @_require_agent
-    def generate_answer(
+    async def generate_answer(
             cls,
             agent_id: str,
             query: Union[str, Dict, List]
@@ -81,7 +80,7 @@ class AgentStack:
             ValueError: If query processing fails
         """
         try:
-            response = cls.__agents[agent_id].process_query(query)
+            response = await cls.__agents[agent_id].process_query(query)
             LOG.info(f'AgentStack :: Query processed successfully for agent \'{agent_id}\'')
             return response
         except Exception as e:
@@ -90,10 +89,11 @@ class AgentStack:
 
     @classmethod
     @_require_agent
-    def store_data(
+    async def store_data(
             cls,
             agent_id: str,
             files: List[str],
+            metadata: Optional[Dict[str, Any]] = None,
             classify_document: bool = True
     ) -> Dict[str, List[str]]:
         """
@@ -102,6 +102,7 @@ class AgentStack:
         Args:
             agent_id (str): Identifier of the agent to use
             files (List[str]): List of file paths to store
+            metadata (Optional[Dict[str, Any]]): Optional metadata to associate with documents
             classify_document (bool, optional): Whether to classify documents. Defaults to True.
 
         Returns:
@@ -111,8 +112,9 @@ class AgentStack:
             ValueError: If document storage fails
         """
         try:
-            stored_documents = cls.__agents[agent_id].store_documents(
+            stored_documents = await cls.__agents[agent_id].store_documents(
                 files=files,
+                metadata=metadata,
                 classify_document=classify_document
             )
             LOG.info(f'AgentStack :: Documents stored successfully for agent \'{agent_id}\'')
@@ -137,7 +139,7 @@ class AgentStack:
 
     @classmethod
     @_require_agent
-    def destroy_agent(cls, agent_id: str, cleanup = False):
+    async def destroy_agent(cls, agent_id: str, cleanup=False):
         """
         Destroys an Agent and remove it from the agents list.
 
@@ -146,7 +148,7 @@ class AgentStack:
             cleanup: Prompt to remove user data if RAG tools present.
         """
 
-        cls.__agents.get(agent_id).destroy_stack(cleanup)
+        await cls.__agents.get(agent_id).destroy_stack(cleanup)
         del cls.__agents[agent_id]
         LOG.info(f'AgentStack :: Agent\'{agent_id}\' closed successfully')
         return

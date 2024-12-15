@@ -13,10 +13,12 @@ class AIClientAbc(ABC):
     @abstractmethod
     def initialize(self):
         """
-        Initialize the AI client.
+        Initialize the AI client object.
 
-        This method should handle any required setup, such as authentication or
-        configuration, to prepare the client for usage.
+        This method should handle any required setup, such as authentication, configuration,
+        or any other preparatory tasks to prepare the client for usage.
+
+        :raises Exception: If there is an error during initialization.
         """
         pass
 
@@ -25,29 +27,43 @@ class AIClientAbc(ABC):
         """
         Get the underlying AI client instance.
 
-        Returns:
-            The raw client object from the underlying AI provider.
+        This method should return the raw client object from the underlying AI provider.
+
+        :return: The raw AI client instance.
+        :rtype: object
         """
         pass
 
     @abstractmethod
-    def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
+    async def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
         """
-        Generate an answer for the given query.
+        Asynchronously generate an answer for the given query.
 
-        Args:
-            query (str): The input query or prompt to process.
-            chunks (List[str], optional): Contextual chunks to guide the response, if applicable.
-            temperature (float, optional): The randomness of the response. Defaults to 0.7.
+        This method should process the input query and, optionally, the provided context
+        to generate a response. The behavior may vary depending on the tool kind (e.g., RAG or prompt-based).
 
-        Returns:
-            str: The generated response from the AI client.
+        :param query: The input query or prompt to process.
+        :type query: str
+        :param chunks: Contextual chunks to guide the response, if applicable (default is None).
+        :type chunks: List[str], optional
+        :param temperature: The randomness of the response, controlling creativity (default is 0.7).
+        :type temperature: float, optional
+
+        :return: The generated response from the AI client.
+        :rtype: str
+
+        :raises Exception: If there is an error generating the answer.
         """
         pass
 
     @abstractmethod
-    def destroy(self):
+    async def destroy(self):
         """
-        Close AI client's connection.
+        Asynchronously close the AI client's connection.
+
+        This method should handle the cleanup process, such as releasing resources
+        or closing any open connections, to ensure proper shutdown of the client.
+
+        :raises Exception: If there is an error during destruction.
         """
         pass

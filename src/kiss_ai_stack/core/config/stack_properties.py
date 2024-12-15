@@ -5,16 +5,24 @@ from kiss_ai_stack.core.models.config.agent import AgentProperties
 from kiss_ai_stack.core.utilities.yaml_reader import YamlReader
 
 
-def stack_properties(stack_config_env_var: str = 'STACK_CONFIG', default_file: str = 'stack.yaml') -> AgentProperties:
+async def stack_properties(stack_config_env_var: str = 'STACK_CONFIG',
+                           default_file: str = 'stack.yaml') -> AgentProperties:
     """
-    Load and validate stack properties from a YAML configuration file.
+    Asynchronously loads and validates stack properties from a YAML configuration file.
 
-    Parameters:
-        stack_config_env_var (str): The environment variable name for the stack config path.
-        default_file (str): The default file name for the stack.yaml file.
+    Attempts to retrieve the stack configuration file path from an environment variable.
+    If not found, it defaults to 'stack.yaml' located in the current working directory.
+    Reads and validates the YAML configuration asynchronously.
 
-    Returns:
-        AgentProperties: Validated agent properties from the YAML file.
+    :param stack_config_env_var: The environment variable name for the stack config path.
+                                  Defaults to 'STACK_CONFIG'.
+    :param default_file: The default file name for the stack.yaml file if the environment
+                         variable is not set. Defaults to 'stack.yaml'.
+
+    :return: Validated agent properties from the YAML configuration file as an instance of
+             AgentProperties.
+    :raises FileNotFoundError: If the configuration file is not found at the resolved path.
+    :raises RuntimeError: If an error occurs while reading or validating the YAML configuration.
     """
     stack_config_path = os.getenv(stack_config_env_var)
 
@@ -28,8 +36,8 @@ def stack_properties(stack_config_env_var: str = 'STACK_CONFIG', default_file: s
         raise FileNotFoundError(f'Configuration file not found at: {resolved_path}')
 
     try:
-        with YamlReader(resolved_path) as reader:
-            config_dict = reader.read()
+        async with YamlReader(resolved_path) as reader:
+            config_dict = await reader.read()
             return StackValidator.validate(config_dict)
     except Exception as e:
         raise RuntimeError(f'Failed to load or validate stack configuration: {e}')

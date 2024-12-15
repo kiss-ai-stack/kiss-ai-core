@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional, Any
 
 from pydantic import BaseModel
 
@@ -9,6 +9,7 @@ from kiss_ai_stack.core.config.stack_properties import stack_properties
 from kiss_ai_stack.core.models.config.agent import AgentProperties
 from kiss_ai_stack.core.models.core.query_classification_response import QueryClassificationResponse
 from kiss_ai_stack.core.models.core.rag_response import ToolResponse
+from kiss_ai_stack.core.models.enums.tool_kind import ToolKind
 from kiss_ai_stack.core.tools.tool import Tool
 from kiss_ai_stack.core.tools.tool_builder import ToolBuilder
 from kiss_ai_stack.core.utilities.document_utils import file_to_docs
@@ -17,7 +18,7 @@ from kiss_ai_stack.core.utilities.logger import LOG
 
 class Agent:
 
-    def __init__(self, agent_id):
+    def __init__(self, agent_id, temporary: Optional[bool] = True):
         """
         Initialize placeholders for stack components.
         Actual initialization happens in `initialize_stack`.
@@ -28,6 +29,7 @@ class Agent:
         self.__classifier: AIClientAbc | None = None
         self.__tool_roles: Dict[str, str] = {}
         self.__tools: Dict[str, Tool] = {}
+        self.__temporary_agent = temporary
         self.__initialized: bool = False
 
     def __check_initialized(self):
@@ -39,12 +41,12 @@ class Agent:
             LOG.error(f'Agent-{self.__agent_id} :: Initialization check failed')
             raise RuntimeError('Agent has not been initialized.')
 
-    def __initialize_stack_properties(self):
+    async def __initialize_stack_properties(self):
         """
         Load stack properties from the configuration.
         """
         LOG.info(f'Agent-{self.__agent_id} :: Initializing stack properties')
-        self.__stack_properties = stack_properties()
+        self.__stack_properties = await stack_properties()
         LOG.debug(f'Agent-{self.__agent_id} :: Stack properties loaded')
 
     def __initialize_classifier(self):
@@ -58,7 +60,7 @@ class Agent:
             self.__classifier.initialize()
             LOG.debug(f'AgentStack :: Classifier initialized: {self.__classifier}')
 
-    def __initialize_tools(self):
+    async def __initialize_tools(self):
         """
         Initialize tools and map their roles.
         """
@@ -66,30 +68,32 @@ class Agent:
         for tool_properties in self.__stack_properties.tools:
             LOG.debug(f'Agent-{self.__agent_id} :: Initializing tool: {tool_properties.name}')
             self.__tool_roles[tool_properties.name] = tool_properties.role
-            self.__tools[tool_properties.name] = ToolBuilder.build_tool(
+            self.__tools[tool_properties.name] = await ToolBuilder.build_tool(
                 agent_id=self.__agent_id,
                 tool_properties=tool_properties,
-                vector_db_properties=self.__stack_properties.vector_db
+                vector_db_properties=self.__stack_properties.vector_db,
+                temporary_agent=self.__temporary_agent
             )
         LOG.debug(f'Agent-{self.__agent_id} :: Tools initialized')
 
-    def initialize_stack(self):
+    async def initialize_stack(self):
         """
         Initialize the entire stack, including properties, classifier, and tools.
         """
         LOG.info(f'Agent-{self.__agent_id} :: Starting initialization')
         if not self.__initialized:
-            self.__initialize_stack_properties()
+            await self.__initialize_stack_properties()
             self.__initialize_classifier()
-            self.__initialize_tools()
+            await self.__initialize_tools()
             self.__initialized = True
             LOG.info(f'Agent-{self.__agent_id} :: initialization completed')
         else:
             LOG.warning(f'Agent-{self.__agent_id} :: has been already initialized')
 
-    def classify_query(
+    async def classify_query(
             self,
             query: Union[str, Dict, List, BaseModel],
+            rag: bool = False,
             classification_type: str = 'default'
     ) -> Union[str, QueryClassificationResponse]:
         """
@@ -97,6 +101,7 @@ class Agent:
 
         Args:
             query: Input query to classify. Can be string, dictionary, list, or Pydantic model.
+            rag: If True, only consider RAG-type tools for classification.
             classification_type: Specifies the classification approach.
 
         Returns:
@@ -119,8 +124,22 @@ class Agent:
                 return str(input_data)
 
         normalized_query = normalize_input(query)
+
+        filtered_tool_roles = {}
+        if rag:
+            filtered_tool_roles = {
+                name: role for name, role in self.__tool_roles.items()
+                if self.__tools[name].tool_kind() == ToolKind.RAG
+            }
+        else:
+            filtered_tool_roles = self.__tool_roles
+
+        if not filtered_tool_roles:
+            LOG.error(f'Agent-{self.__agent_id} :: No tools available after RAG filtering')
+            raise ValueError('No tools available for query classification')
+
         role_definitions = '\n'.join(
-            [f'{name}: {role}' for name, role in self.__tool_roles.items()]
+            [f'{name}: {role}' for name, role in filtered_tool_roles.items()]
         )
 
         if classification_type == 'detailed':
@@ -140,7 +159,7 @@ class Agent:
                - reasoning: [Brief explanation of classification]
                """
             LOG.debug(f'Agent-{self.__agent_id} :: Classification prompt (detailed): ****')
-            detailed_response = self.__classifier.generate_answer(query=prompt)
+            detailed_response = await self.__classifier.generate_answer(query=prompt)
             LOG.debug(f'Agent-{self.__agent_id} :: Detailed classification response: ****')
 
             try:
@@ -156,7 +175,7 @@ class Agent:
                 )
             except Exception:
                 LOG.warning(f'Agent-{self.__agent_id} :: Default classification fallback')
-                return self.classify_query(query, 'default')
+                return await self.classify_query(query, rag=rag, classification_type='default')
 
         prompt = f"""
            Classify the following input into one of the categories: {', '.join(self.__tool_roles.values())}.
@@ -169,63 +188,83 @@ class Agent:
            Please return only the category name, without any extra text or prefix.
            """
         LOG.debug(f'Agent-{self.__agent_id} :: Classification prompt (default): ****')
-        response = self.__classifier.generate_answer(query=prompt)
+        response = await self.__classifier.generate_answer(query=prompt)
         LOG.debug(f'Agent-{self.__agent_id} :: Classification result: ****')
         return response
 
-    def process_query(self, query: str) -> ToolResponse:
+    async def process_query(self, query: str) -> ToolResponse:
         """
         Process the input query, classify it, and use the appropriate tool.
         """
         LOG.info(f'Agent-{self.__agent_id} :: Processing query: ****')
         self.__check_initialized()
 
-        tool_name = self.classify_query(query)
+        tool_name = await self.classify_query(query)
         LOG.debug(f'Agent-{self.__agent_id} :: Classified tool: {tool_name}')
         if tool_name not in self.__tools:
             LOG.error(f'Agent-{self.__agent_id} :: No tool found for role: {tool_name}')
             raise ValueError(f'No tool found for the classified role \'{tool_name}\'.')
 
-        response = self.__tools[tool_name].process_query(query)
+        response = await self.__tools[tool_name].process_query(query)
         LOG.debug(f'Agent-{self.__agent_id} :: Query processed. Response: ****')
         return response
 
-    def store_documents(self, files: List[str], classify_document: bool = True) -> Dict[str, List[str]]:
+    async def store_documents(
+            self,
+            files: List[str],
+            metadata: Optional[Dict[str, Any]] = None,
+            classify_document: bool = True
+    ) -> Dict[str, Union[List[str], str]]:
         """
         Store multiple documents in the appropriate vector database tool.
 
         Args:
             files (List[str]): List of file paths to store
+            metadata (Optional[Dict[str, Any]]): Optional metadata to associate with documents
             classify_document (bool): Whether to classify each document before storing
 
         Returns:
-            Dict[str, List[str]]: Dictionary of tool names and their stored document IDs
+            Dict[str, Union[List[str], str]]:
+            Dictionary containing stored document IDs and optional query response
         """
-        LOG.info('Agent-{self.__agent_id} :: Storing documents')
+        LOG.info(f'Agent-{self.__agent_id} :: Storing documents')
         LOG.debug(f'Agent-{self.__agent_id} :: Files to store: {files}')
-        self.__check_initialized()
 
+        self.__check_initialized()
         stored_documents = {}
+        rag_tool_names = [
+            name for name in self.__tool_roles.keys()
+            if self.__tools[name].tool_kind() == ToolKind.RAG
+        ]
+        if len(rag_tool_names) == 0:
+            LOG.error(f'Agent-{self.__agent_id} :: No tools available after RAG filtering')
+            raise ValueError('No tools available for query classification')
+
         for file in files:
             try:
                 LOG.debug(f'Agent-{self.__agent_id} :: Processing file: {file}')
-                chunks, metadata_list = file_to_docs(file)
+                chunks, metadata_list = await file_to_docs(file)
 
-                if classify_document:
+                if metadata:
+                    metadata_list = [
+                        {**meta, **metadata} for meta in metadata_list
+                    ]
+
+                if classify_document and len(rag_tool_names) > 1:
                     classify_input = ' '.join(chunks[:3]) if len(chunks) > 3 else ' '.join(chunks)
                     if not classify_input:
                         classify_input = os.path.basename(file)
-                    tool_name = self.classify_query(classify_input)
+                    tool_name = await self.classify_query(classify_input, True)
                     LOG.debug(f'Agent-{self.__agent_id} :: Classified tool for file: {tool_name}')
                 else:
-                    tool_name = list(self.__tools.keys())[0] if self.__tools else None
+                    tool_name = rag_tool_names[0]
 
                 if not tool_name or tool_name not in self.__tools:
                     LOG.error(f'Agent-{self.__agent_id} :: No tool found for document: {file}')
                     raise ValueError(f'No tool found for document: {file}')
 
                 tool = self.__tools[tool_name]
-                document_ids = tool.store_docs(
+                document_ids = await tool.store_docs(
                     documents=chunks,
                     metadata_list=metadata_list
                 )
@@ -235,14 +274,14 @@ class Agent:
                 LOG.debug(f'Agent-{self.__agent_id} :: Stored document IDs: ****')
 
             except Exception as e:
-                LOG.error(f'Error processing file {file}')
+                LOG.error(f'Agent-{self.__agent_id} :: Error processing file {file}')
                 raise e
 
         LOG.info(f'Agent-{self.__agent_id} :: Document storage completed')
         LOG.debug(f'Agent-{self.__agent_id} :: Stored documents: ****')
         return stored_documents
 
-    def destroy_stack(self, cleanup: bool = False):
+    async def destroy_stack(self, cleanup: bool = False):
         """
         Destroy and clean up the agent's stack components.
         """
@@ -251,13 +290,13 @@ class Agent:
         for tool_name, tool in self.__tools.items():
             try:
                 LOG.debug(f'Agent-{self.__agent_id} :: Destroying tool: {tool_name}')
-                tool.destroy(cleanup)
+                await tool.destroy(cleanup)
             except Exception as e:
                 LOG.warning(f'Agent-{self.__agent_id} :: Error destroying tool {tool_name}: {str(e)}')
         if self.__classifier:
             try:
                 LOG.debug(f'Agent-{self.__agent_id} :: Destroying classifier')
-                self.__classifier.destroy()
+                await self.__classifier.destroy()
             except Exception as e:
                 LOG.warning(f'Agent-{self.__agent_id} :: Error destroying classifier: {str(e)}')
         self.__stack_properties = None

@@ -21,25 +21,26 @@ class VectorDBFactory:
             properties: VectorDBProperties
     ) -> VectorDBAbc | None:
         """
-        Create and return an instance of a vector database client.
+        Creates and returns an instance of a vector database client.
 
         This method checks the `provider` attribute in the `properties` to
         determine the vector database vendor and initializes the corresponding
         database client.
 
-        Args:
-            collection_name (str): The name of the collection to be accessed or created.
-            properties (VectorDBProperties): Configuration properties for the vector database client.
+        :param collection_name: The name of the collection to be accessed or created.
+                                 This will be used when initializing the vector database.
+        :param properties: Configuration properties for the vector database client.
+                           This includes the database vendor and other settings.
 
-        Returns:
-            VectorDBAbc | None: An instance of a vector database client implementing the `VectorDBAbc` interface,
-                                or None if no matching provider is found.
+        :return: An instance of a vector database client that implements the `VectorDBAbc` interface,
+                 or None if no matching provider is found.
+
+        :raises ValueError: If an unsupported database vendor is specified in the properties.
 
         Example:
             ```python
             properties = VectorDBProperties(provider=VectorDBVendor.CHROMA, ...)
             vector_db = VectorDBFactory.get_vector_db(
-                embedding_function=my_embedding_function,
                 collection_name="my_collection",
                 properties=properties
             )

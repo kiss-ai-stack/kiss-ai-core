@@ -9,6 +9,9 @@ class VectorDBProperties(BaseModel):
     provider: str
     kind: VectorDBKind
     path: Optional[str] = None
+    host: Optional[str]
+    port: Optional[int]
+    secure: Optional[bool] = True
 
     class Config:
         str_min_length = 1

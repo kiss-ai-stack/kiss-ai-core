@@ -19,20 +19,20 @@ class AIClientFactory:
         """
         Retrieve an AI client instance based on the provider specified in properties.
 
-        Args:
-            properties (AIClientProperties): The configuration properties for the AI client,
-                including the provider type and API key.
-            tool_kind (ToolKind): The type of tool to be used with the AI client,
-                such as PROMPT or RAG.
+        This static method matches the specified provider in the configuration properties
+        and returns the corresponding AI client implementation. If the provider is not recognized,
+        it returns None.
 
-        Returns:
-            AIClientAbc | None: An instance of the appropriate AI client implementation if the
-                provider is supported, or None if the provider is not recognized.
+        :param properties: The configuration properties for the AI client, which include the provider type (e.g., OpenAI) and the API key.
+        :param tool_kind: The type of tool to be used with the AI client, such as PROMPT (prompt-based generation) or RAG (retrieval-augmented generation).
 
-        Example:
+        :returns: An instance of the appropriate AI client implementation (e.g., OpenAIClient) if the provider is recognized, or None if the provider is not supported.
+
+        :example:
             properties = AIClientProperties(provider=AIClientVendor.OPENAI, api_key='your_api_key')
             tool_kind = ToolKind.PROMPT
             ai_client = AIClientFactory.get_ai_client(properties, tool_kind)
+            # Returns an instance of OpenAIClient
         """
         match properties.provider:
             case AIClientVendor.OPENAI:

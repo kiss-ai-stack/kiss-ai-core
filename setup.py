@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="kiss-ai-stack-core",
-    version="0.1.0-alpha2",
+    version="0.1.0-alpha5",
     description="KISS AI Stack's AI Agent Builder - Simplify AI Agent Development",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
