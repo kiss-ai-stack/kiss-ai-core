@@ -1,5 +1,5 @@
-<div style="text-align: center; margin-bottom: 20px;">
-  <img src="https://kiss-ai-stack.github.io/kissaistack.svg" alt="KISS AI Stack Banner" style="max-width: auto; height: 20%;">
+<div style="text-align: left; margin-bottom: 20px;">
+  <img src="https://kiss-ai-stack.github.io/kissaistack.svg" alt="KISS AI Stack Banner" style="max-width: auto; height: 250px">
 </div>
 
 # KISS AI Stack - Core
