@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from kiss_ai_stack.core.utilities import LOG
+from kiss_ai_stack.core.utilities.logger import LOG
 
 
 def install_package(package_name: str, upgrade: bool = False) -> None:
@@ -15,7 +15,7 @@ def install_package(package_name: str, upgrade: bool = False) -> None:
     """
     try:
         command = [sys.executable, '-m', 'pip', 'install', package_name]
-        LOG.info(f'Executing `{''.join(command)}`')
+        LOG.info(f'Executing `{' '.join(command)}`')
         if upgrade:
             command.append('--upgrade')
 

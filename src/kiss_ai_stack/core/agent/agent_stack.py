@@ -1,9 +1,9 @@
 import functools
-from typing import Dict, List, Optional, Union, Callable, TypeVar
+from typing import Dict, List, Optional, Union, Callable, TypeVar, Any
 
 from kiss_ai_stack.core.agent.agent import Agent
 from kiss_ai_stack.core.models.core.rag_response import ToolResponse
-from kiss_ai_stack.core.utilities import LOG
+from kiss_ai_stack.core.utilities.logger import LOG
 
 T = TypeVar('T')
 
@@ -37,9 +37,7 @@ class AgentStack:
         it raises a KeyError with a descriptive message.
 
         :param func: The method to be decorated with agent validation.
-
         :returns: A wrapped method that checks for agent existence.
-
         :raises KeyError: If the specified agent ID is not found in the stack.
         """
 
@@ -107,3 +105,65 @@ class AgentStack:
         except Exception as e:
             LOG.error(f'AgentStack :: Query processing failed for agent \'{agent_id}\': {e}')
             raise
+
+    @classmethod
+    @_require_agent
+    async def store_data(
+            cls,
+            agent_id: str,
+            files: List[str],
+            metadata: Optional[Dict[str, Any]] = None,
+            classify_document: bool = True
+    ) -> Dict[str, List[str]]:
+        """
+        Store documents for a specific agent.
+
+        :param agent_id: (str) Identifier of the agent to use
+        :param files: (List[str]) List of file paths to store
+        :param metadata: (Optional[Dict[str, Any]]) Optional metadata to associate with documents
+        :param classify_document: (bool, optional) Whether to classify documents. Defaults to True.
+
+        :returns: Dict[str, List[str]]: Dictionary of stored document IDs per tool
+
+        :raises ValueError: If document storage fails
+        """
+        try:
+            stored_documents = await cls.__agents[agent_id].store_documents(
+                files=files,
+                metadata=metadata,
+                classify_document=classify_document
+            )
+            LOG.info(f'AgentStack :: Documents stored successfully for agent \'{agent_id}\'')
+            return stored_documents
+        except Exception as e:
+            LOG.error(f'AgentStack :: Document storage failed for agent \'{agent_id}\': {e}')
+            raise
+
+    @classmethod
+    @_require_agent
+    def get_agent(cls, agent_id: str) -> Optional[Agent]:
+        """
+        Retrieve a specific agent session by its Id.
+
+        :param agent_id: (str) Identifier of the agent to retrieve
+        :returns Optional[Agent]: The agent instance if found, None otherwise
+        """
+        return cls.__agents.get(agent_id)
+
+    @classmethod
+    @_require_agent
+    async def destroy_agent(cls, agent_id: str, cleanup=False):
+        """
+        Destroys an Agent session and remove it from the agent sessions list.
+
+        :param agent_id: Identifier of the agent to destroy.
+        :param cleanup: Prompt to remove user data if RAG tools present.
+        """
+        agent = cls.__agents.get(agent_id)
+        if agent:
+            await agent.destroy_stack(cleanup)
+            del cls.__agents[agent_id]
+            LOG.info(f'AgentStack :: Agent\'{agent_id}\' closed successfully')
+        else:
+            LOG.warning(f'AgentStack :: Agent\'{agent_id}\' not found')
+        return
