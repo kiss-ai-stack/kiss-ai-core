@@ -33,11 +33,11 @@ async def stack_properties(stack_config_env_var: str = 'STACK_CONFIG',
         resolved_path = os.path.join(command_dir, default_file)
 
     if not os.path.isfile(resolved_path):
-        raise FileNotFoundError(f'Configuration file not found at: {resolved_path}')
+        raise FileNotFoundError(f'stack_properties :: Configuration file not found at: {resolved_path}')
 
     try:
         async with YamlReader(resolved_path) as reader:
             config_dict = await reader.read()
             return StackValidator.validate(config_dict)
     except Exception as e:
-        raise RuntimeError(f'Failed to load or validate stack configuration: {e}')
+        raise RuntimeError(f'stack_properties :: Failed to load or validate stack configuration: {e}')

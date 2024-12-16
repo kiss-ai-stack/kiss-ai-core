@@ -31,7 +31,7 @@ class Agent:
         LOG.debug(f'Agent-{agent_id} :: agent ready!')
         self.__agent_id = agent_id
         self.__stack_properties: AgentProperties | None = None
-        self.__classifier: AIClientAbc | None = None
+        self.__decision_maker: AIClientAbc | None = None
         self.__tool_roles: Dict[str, str] = {}
         self.__tools: Dict[str, Tool] = {}
         self.__temporary_agent = temporary
@@ -54,16 +54,16 @@ class Agent:
         self.__stack_properties = await stack_properties()
         LOG.debug(f'Agent-{self.__agent_id} :: Stack properties loaded')
 
-    def __initialize_classifier(self):
+    def __initialize_decision_maker(self):
         """
-        Initialize the AI classifier client.
+        Initialize the AI based decision_maker client.
         """
-        LOG.info(f'Agent-{self.__agent_id} :: Initializing classifier')
+        LOG.info(f'Agent-{self.__agent_id} :: Initializing decision maker')
         if self.__stack_properties:
-            self.__classifier = AIClientFactory.get_ai_client(
-                self.__stack_properties.classifier.ai_client, self.__stack_properties.classifier.kind)
-            self.__classifier.initialize()
-            LOG.debug(f'AgentStack :: Classifier initialized: {self.__classifier}')
+            self.__decision_maker = AIClientFactory.get_ai_client(
+                self.__stack_properties.decision_maker.ai_client, self.__stack_properties.decision_maker.kind)
+            self.__decision_maker.initialize()
+            LOG.debug(f'AgentStack :: Decision maker initialized: {self.__decision_maker}')
 
     async def __initialize_tools(self):
         """
@@ -85,7 +85,7 @@ class Agent:
         LOG.info(f'Agent-{self.__agent_id} :: Starting initialization')
         if not self.__initialized:
             await self.__initialize_stack_properties()
-            self.__initialize_classifier()
+            self.__initialize_decision_maker()
             await self.__initialize_tools()
             self.__initialized = True
             LOG.info(f'Agent-{self.__agent_id} :: initialization completed')
@@ -159,7 +159,7 @@ class Agent:
                - reasoning: [Brief explanation of classification]
                """
             LOG.debug(f'Agent-{self.__agent_id} :: Classification prompt (detailed): ****')
-            detailed_response = await self.__classifier.generate_answer(query=prompt)
+            detailed_response = await self.__decision_maker.generate_answer(query=prompt)
             LOG.debug(f'Agent-{self.__agent_id} :: Detailed classification response: ****')
 
             try:
@@ -188,7 +188,7 @@ class Agent:
            Please return only the category name, without any extra text or prefix.
            """
         LOG.debug(f'Agent-{self.__agent_id} :: Classification prompt (default): ****')
-        response = await self.__classifier.generate_answer(query=prompt)
+        response = await self.__decision_maker.generate_answer(query=prompt)
         LOG.debug(f'Agent-{self.__agent_id} :: Classification result: ****')
         return response
 
@@ -295,14 +295,14 @@ class Agent:
                 await tool.destroy(cleanup)
             except Exception as e:
                 LOG.warning(f'Agent-{self.__agent_id} :: Error destroying tool {tool_name}: {str(e)}')
-        if self.__classifier:
+        if self.__decision_maker:
             try:
-                LOG.debug(f'Agent-{self.__agent_id} :: Destroying classifier')
-                await self.__classifier.destroy()
+                LOG.debug(f'Agent-{self.__agent_id} :: Destroying decision_maker')
+                await self.__decision_maker.destroy()
             except Exception as e:
-                LOG.warning(f'Agent-{self.__agent_id} :: Error destroying classifier: {str(e)}')
+                LOG.warning(f'Agent-{self.__agent_id} :: Error occurred while destroying decision_maker: {str(e)}')
         self.__stack_properties = None
-        self.__classifier = None
+        self.__decision_maker = None
         self.__tool_roles.clear()
         self.__tools.clear()
         self.__initialized = False

@@ -7,7 +7,7 @@ from kiss_ai_stack.core.models.config.tool import ToolProperties
 
 
 class AgentProperties(BaseModel):
-    classifier: ToolProperties
+    decision_maker: ToolProperties
     tools: List[ToolProperties]
     vector_db: VectorDBProperties
 

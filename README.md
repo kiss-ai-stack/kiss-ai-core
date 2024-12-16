@@ -36,8 +36,8 @@ Here’s an example YAML configuration to set up an AI agent with different tool
 
 ```yaml
 agent:
-  classifier: # Required for tool classification
-    name: classifier
+  decision_maker: # Required for tool classification
+    name: decision_maker
     role: classify tools for given queries
     kind: prompt  # Choose from 'rag' or 'prompt'
     ai_client:

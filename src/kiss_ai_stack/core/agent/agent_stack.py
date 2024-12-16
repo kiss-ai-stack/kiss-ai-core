@@ -163,7 +163,7 @@ class AgentStack:
         if agent:
             await agent.destroy_stack(cleanup)
             del cls.__agents[agent_id]
-            LOG.info(f'AgentStack :: Agent\'{agent_id}\' closed successfully')
+            LOG.info(f'AgentStack :: Agent-\'{agent_id}\' closed successfully')
         else:
-            LOG.warning(f'AgentStack :: Agent\'{agent_id}\' not found')
+            LOG.warning(f'AgentStack :: Agent-\'{agent_id}\' not found')
         return
