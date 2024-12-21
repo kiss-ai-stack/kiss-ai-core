@@ -109,7 +109,7 @@ asyncio.run(main())
 
 ---
 
-For more information please refer: !(Core documentation)[https://kiss-ai-stack.github.io/docs/ai-stack-core/]
+For more information please refer: [Core documentation](https://kiss-ai-stack.github.io/docs/ai-stack-core/)
 
 ## Contributing
 
