@@ -109,20 +109,7 @@ asyncio.run(main())
 
 ---
 
-## Documentation
-
-### Key Methods
-
-- `bootstrap_stack(stack_id: str, temporary: bool)`: Initialize a new stack session.
-- `generate_answer(stack_id: str, query: Union[str, Dict, List])`: Process a query and return a response.
-
-### Configuration Highlights
-
-- **AI Client**: Configure the provider, model, and API key for supported services like OpenAI.
-- **Tools**: Define tools such as general-purpose query handlers or document processors.
-- **Vector Database**: Set up in-memory or persistent storage for RAG-based tasks.
-
----
+For more information please refer: ![Core documentation](https://kiss-ai-stack.github.io/docs/ai-stack-core/)
 
 ## Contributing
 
