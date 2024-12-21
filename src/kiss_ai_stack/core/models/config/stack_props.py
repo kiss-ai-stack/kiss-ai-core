@@ -2,11 +2,11 @@ from typing import List
 
 from pydantic import BaseModel
 
-from kiss_ai_stack.core.models.config.db import VectorDBProperties
-from kiss_ai_stack.core.models.config.tool import ToolProperties
+from kiss_ai_stack.core.models.config.vdb_props import VectorDBProperties
+from kiss_ai_stack.core.models.config.tool_props import ToolProperties
 
 
-class AgentProperties(BaseModel):
+class StackProperties(BaseModel):
     decision_maker: ToolProperties
     tools: List[ToolProperties]
     vector_db: VectorDBProperties

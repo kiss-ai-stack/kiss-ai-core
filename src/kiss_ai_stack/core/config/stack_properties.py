@@ -1,12 +1,12 @@
 import os
 
 from kiss_ai_stack.core.config.stack_validator import StackValidator
-from kiss_ai_stack.core.models.config.agent import AgentProperties
+from kiss_ai_stack.core.models.config.stack_props import StackProperties
 from kiss_ai_stack.core.utilities.yaml_reader import YamlReader
 
 
 async def stack_properties(stack_config_env_var: str = 'STACK_CONFIG',
-                           default_file: str = 'stack.yaml') -> AgentProperties:
+                           default_file: str = 'stack.yaml') -> StackProperties:
     """
     Asynchronously loads and validates stack properties from a YAML configuration file.
 
@@ -19,8 +19,8 @@ async def stack_properties(stack_config_env_var: str = 'STACK_CONFIG',
     :param default_file: The default file name for the stack.yaml file if the environment
                          variable is not set. Defaults to 'stack.yaml'.
 
-    :return: Validated agent properties from the YAML configuration file as an instance of
-             AgentProperties.
+    :return: Validated stack properties from the YAML configuration file as an instance of
+             StackProperties.
     :raises FileNotFoundError: If the configuration file is not found at the resolved path.
     :raises RuntimeError: If an error occurs while reading or validating the YAML configuration.
     """

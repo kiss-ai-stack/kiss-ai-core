@@ -1,2 +1,1 @@
-from .core.agent import Agent
-from .core.agent import AgentStack
+from kiss_ai_stack.core.stack.stacks import Stacks

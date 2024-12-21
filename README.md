@@ -1,20 +1,21 @@
+
 <div style="text-align: left; margin-bottom: 20px;">
   <img src="https://kiss-ai-stack.github.io/kissaistack.svg" alt="KISS AI Stack Banner" style="max-width: auto; height: 250px">
 </div>
 
 # KISS AI Stack - Core
 
-**Effortless AI Agent Building**
+**Effortless AI Stack Building**
 
-Welcome to the core of the **KISS AI Stack**! This module helps you build an AI agent effortlessly using a simple YAML configuration file. Say goodbye to boilerplate code and embrace minimalism with the **KISS principle** (Keep It Simple, Stupid).
+Welcome to the core of the **KISS AI Stack**! This module helps you build a stack effortlessly using a simple YAML configuration file. Say goodbye to boilerplate code and embrace minimalism with the **KISS principle** (Keep It Simple, Stupid).
 
 ---
 
 ## Features
 
-- **Centralized Agent Management**: Manage multiple session-based AI agents with lifecycle support.
+- **Centralized Stack Management**: Manage multiple session-based AI stacks with lifecycle support.
 - **Minimal Dependencies**: Built using simple, vanilla vendor libraries.
-- **Tool Classification**: Configure tools for your agent to handle specific tasks easily.
+- **Tool Classification**: Configure tools for your stack to handle specific tasks easily.
 - **Supports RAG and Prompt-Based Models**: Choose the model type that suits your needs.
 - **Thread-Safe**: Reliable operation in multi-threaded environments.
 
@@ -25,17 +26,17 @@ Welcome to the core of the **KISS AI Stack**! This module helps you build an AI 
 Install the core module using pip:
 
 ```bash
-pip install kiss-ai-stack-core
+pip install kiss-ai-stack-core~=0.1.0a28
 ```
 
 ---
 
 ## Example Configuration
 
-Here’s an example YAML configuration to set up an AI agent with different tools:
+Here’s an example YAML configuration to set up an AI stack with different tools:
 
 ```yaml
-agent:
+stack:
   decision_maker: # Required for tool classification
     name: decision_maker
     role: classify tools for given queries
@@ -65,7 +66,7 @@ agent:
 
   vector_db:
     provider: chroma
-    kind: remote # Choose in-memory, storage or remote options.
+    kind: remote # Choose in-memory, storage, or remote options.
     host: 0.0.0.0
     port: 8000
     secure: false
@@ -75,18 +76,18 @@ agent:
 
 ## Example Python Usage
 
-Use the core module to build and interact with your AI agent:
+Use the core module to build and interact with your AI stack:
 
 ```python
-from kiss_ai_stack import AgentStack
+from kiss_ai_stack import Stacks
 
 async def main():
     try:
-        # Initialize an agent in the stack
-        await AgentStack.bootstrap_agent(agent_id="my_agent", temporary=True)
+        # Initialize a stack in the stack
+        await Stacks.bootstrap_stack(stack_id="my_stack", temporary=True)
 
         # Process a query
-        response = await AgentStack.generate_answer(agent_id="my_agent", query="What is KISS AI Stack?")
+        response = await Stacks.generate_answer(stack_id="my_stack", query="What is Retrieval-Augmented Generation?")
         print(response.answer)
 
     except Exception as ex:
@@ -101,10 +102,10 @@ asyncio.run(main())
 
 ## How It Works
 
-1. **Agent Initialization**: Use `AgentStack.bootstrap_agent` to initialize agents with their configuration and resources.
-2. **Query Processing**: Process queries with `AgentStack.generate_answer`, leveraging tools and AI clients defined in the YAML configuration.
+1. **Stack Initialization**: Use `Stack.bootstrap_stack` to initialize stacks with their configuration and resources.
+2. **Query Processing**: Process queries with `Stack.generate_answer`, leveraging tools and AI clients defined in the YAML configuration.
 3. **Tool Management**: Define tools to handle specific tasks like document processing or query classification.
-4. **Vector Database**: Use the `vector_db` section to define how document embeddings are stored and retrieved for RAG-based tasks. Currently, `Chroma` is supported.
+4. **Vector Database**: Use the `vector_db` section to define how document embeddings are stored and retrieved for RAG-based tasks. Currently, only `Chroma` is supported.
 
 ---
 
@@ -112,8 +113,8 @@ asyncio.run(main())
 
 ### Key Methods
 
-- `bootstrap_agent(agent_id: str, temporary: bool)`: Initialize a new agent session.
-- `generate_answer(agent_id: str, query: Union[str, Dict, List])`: Process a query and return a response.
+- `bootstrap_stack(stack_id: str, temporary: bool)`: Initialize a new stack session.
+- `generate_answer(stack_id: str, query: Union[str, Dict, List])`: Process a query and return a response.
 
 ### Configuration Highlights
 
@@ -132,4 +133,3 @@ We welcome contributions! Submit pull requests or open issues to improve this st
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-

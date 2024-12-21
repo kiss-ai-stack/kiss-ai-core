@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="kiss-ai-stack-core",
-    version="0.1.0-alpha14",
-    description="KISS AI Stack's AI Agent Builder - Simplify AI Agent Development",
+    version="0.1.0-alpha28",
+    description="KISS AI Stack's AI tools builder core",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author="KISS AI Stack, Lahiru Pathirage",
@@ -20,12 +20,13 @@ setup(
         "tiktoken~=0.8.0",
         "tokenizers~=0.20.3",
         "pandas~=2.2.3",
+        "numpy~=1.26.4",
         "unstructured[xlsx]~=0.16.8",
         "unstructured[pdf]~=0.16.8",
         "unstructured[docx]~=0.16.8",
         "unstructured[csv]~=0.16.8"
     ],
-    keywords=["ai", "agent", "machine-learning", "llm", "document-processing"],
+    keywords=["ai", "stack", "rag", "prompt", "yaml", "machine-learning", "llm", "document-processing"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

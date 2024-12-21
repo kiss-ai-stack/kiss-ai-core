@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Tuple
 
 from kiss_ai_stack.core.config import VECTOR_DB
 from kiss_ai_stack.core.dbs.db_abc import VectorDBAbc
-from kiss_ai_stack.core.models.config.db import VectorDBProperties
+from kiss_ai_stack.core.models.config.vdb_props import VectorDBProperties
 from kiss_ai_stack.core.models.enums.ai_client_vendor import AIClientVendor
 from kiss_ai_stack.core.models.enums.db_kind import VectorDBKind
 from kiss_ai_stack.core.models.enums.db_vendor import VectorDBVendor

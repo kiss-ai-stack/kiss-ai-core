@@ -1,6 +1,6 @@
 from kiss_ai_stack.core.dbs.db_abc import VectorDBAbc
 from kiss_ai_stack.core.dbs.vendors.chroma_db import ChromaVectorDB
-from kiss_ai_stack.core.models.config.db import VectorDBProperties
+from kiss_ai_stack.core.models.config.vdb_props import VectorDBProperties
 from kiss_ai_stack.core.models.enums.db_vendor import VectorDBVendor
 
 

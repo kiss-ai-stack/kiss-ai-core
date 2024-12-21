@@ -1,8 +1,9 @@
 from typing import List, Optional
 
+import numpy as np
 from kiss_ai_stack.core.ai_clients.ai_client_abc import AIClientAbc
 from kiss_ai_stack.core.config import AI_CLIENT
-from kiss_ai_stack.core.models.config.ai_client import AIClientProperties
+from kiss_ai_stack.core.models.config.ai_client_props import AIClientProperties
 from kiss_ai_stack.core.models.enums.ai_client_vendor import AIClientVendor
 from kiss_ai_stack.core.models.enums.tool_kind import ToolKind
 from kiss_ai_stack.core.utilities import install_package
@@ -54,7 +55,7 @@ class OpenAIClient(AIClientAbc):
         self.__client = AsyncOpenAI(api_key=self.__properties.api_key)
         LOG.info('OpenAIClient :: client initialized successfully')
 
-    async def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
+    async def generate_answer(self, query: str, chunks: List[str] | List[List[str]] = None, temperature: Optional[float] = 0.7) -> str:
         """
         Generate an answer for the given query.
 
@@ -69,8 +70,12 @@ class OpenAIClient(AIClientAbc):
         base_content = ''
 
         if self.__tool_kind == ToolKind.RAG:
-            chunks = chunks or []
-            context = '\n\n'.join(chunks)
+            flattened_chunks = chunks or []
+            if isinstance(chunks[0], list):
+                flattened_chunks = [chunk for sublist in chunks for chunk in sublist]
+            else:
+                flattened_chunks = chunks
+            context = '\n\n'.join(flattened_chunks)
             base_content = 'You are a helpful assistant that answers questions based on the provided context.'
             prompt = f'''Given the following context, answer the question.
             If the answer cannot be found in the context, say so.
@@ -104,6 +109,26 @@ class OpenAIClient(AIClientAbc):
         answer = response.choices[0].message.content
         LOG.info('OpenAIClient :: generated answer: ****')
         return answer
+
+    async def embed_text(self, text: str) -> np.ndarray:
+        """
+        Embed a given text query using OpenAI's embedding model.
+
+        :param text: The text to embed.
+        :return: A numpy array representing the embedding of the text.
+        """
+        try:
+            LOG.info('OpenAIClient :: Embedding text')
+            response = await self.__client.embeddings.create(
+                model='text-embedding-ada-002',
+                input=text
+            )
+            embedding = np.array(response.data[0].embedding)
+            LOG.info('OpenAIClient :: Text embedded successfully.')
+            return embedding
+        except Exception as e:
+            LOG.error(f'OpenAIClient :: Failed to embed text: {str(e)}')
+            raise e
 
     async def destroy(self):
         """

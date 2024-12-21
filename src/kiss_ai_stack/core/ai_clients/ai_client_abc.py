@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+import numpy as np
+
 
 class AIClientAbc(ABC):
     """
@@ -35,7 +37,7 @@ class AIClientAbc(ABC):
         pass
 
     @abstractmethod
-    async def generate_answer(self, query: str, chunks: List[str] = None, temperature: Optional[float] = 0.7) -> str:
+    async def generate_answer(self, query: str, chunks: List[str] | List[List[str]] = None, temperature: Optional[float] = 0.7) -> str:
         """
         Asynchronously generate an answer for the given query.
 
@@ -45,7 +47,7 @@ class AIClientAbc(ABC):
         :param query: The input query or prompt to process.
         :type query: str
         :param chunks: Contextual chunks to guide the response, if applicable (default is None).
-        :type chunks: List[str], optional
+        :type chunks: List[str] | List[List[str]], optional
         :param temperature: The randomness of the response, controlling creativity (default is 0.7).
         :type temperature: float, optional
 
@@ -53,6 +55,15 @@ class AIClientAbc(ABC):
         :rtype: str
 
         :raises Exception: If there is an error generating the answer.
+        """
+        pass
+
+    @abstractmethod
+    async def embed_text(self, text: str) -> np.ndarray:
+        """
+        Get a numpy array representation for the AI model for given text/query.
+
+        :param text: (str) Query/text
         """
         pass
 

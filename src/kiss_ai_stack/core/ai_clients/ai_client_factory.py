@@ -1,6 +1,6 @@
 from kiss_ai_stack.core.ai_clients.ai_client_abc import AIClientAbc
 from kiss_ai_stack.core.ai_clients.vendors.openai_client import OpenAIClient
-from kiss_ai_stack.core.models.config.ai_client import AIClientProperties
+from kiss_ai_stack.core.models.config.ai_client_props import AIClientProperties
 from kiss_ai_stack.core.models.enums.ai_client_vendor import AIClientVendor
 from kiss_ai_stack.core.models.enums.tool_kind import ToolKind
 

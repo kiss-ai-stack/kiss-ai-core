@@ -1,35 +1,35 @@
 from pydantic import ValidationError
 
-from kiss_ai_stack.core.models.config.agent import AgentProperties
+from kiss_ai_stack.core.models.config.stack_props import StackProperties
 
 
 class StackValidator:
 
     @staticmethod
-    def validate(data: dict) -> AgentProperties:
+    def validate(data: dict) -> StackProperties:
         """
-        Validates the YAML data and returns an AgentConfig object using Pydantic models.
+        Validates the YAML data and returns an StackProperties object using Pydantic models.
 
         :param data: The parsed YAML data
         :raises ValueError: If validation rules are violated
-        :returns: AgentConfig instance
+        :returns: StackProperties instance
         """
-        if 'agent' not in data:
-            raise ValueError('StackValidator :: Missing \'agent\' section in YAML.')
-        agent_data = data['agent']
+        if 'stack' not in data:
+            raise ValueError('StackValidator :: Missing \'stack\' section in YAML.')
+        stack_data = data['stack']
 
-        if 'decision_maker' not in agent_data:
-            raise ValueError('StackValidator :: Missing or invalid \'decision_maker\' section in \'agent\'.')
+        if 'decision_maker' not in stack_data:
+            raise ValueError('StackValidator :: Missing or invalid \'decision_maker\' section in \'stack\'.')
         else:
-            if agent_data['decision_maker']['kind'] != 'prompt':
+            if stack_data['decision_maker']['kind'] != 'prompt':
                 raise ValueError(f'StackValidator :: \'decision_maker\' :: only supports `prompt` kind.')
 
-        if 'tools' not in agent_data or not isinstance(agent_data['tools'], list):
-            raise ValueError('StackValidator :: Missing or invalid \'tools\' section in \'agent\'. It must be a list.')
+        if 'tools' not in stack_data or not isinstance(stack_data['tools'], list):
+            raise ValueError('StackValidator :: Missing or invalid \'tools\' section in \'stack\'. It must be a list.')
 
         try:
-            agent = AgentProperties(**agent_data)
+            stack = StackProperties(**stack_data)
         except ValidationError as e:
             raise ValueError(f'StackValidator :: Validation error: {e}')
 
-        return agent
+        return stack

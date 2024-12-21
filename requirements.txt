@@ -13,3 +13,4 @@ unstructured[csv]~=0.16.8
 tiktoken~=0.8.0
 tokenizers~=0.20.3
 pandas~=2.2.3
+numpy~=1.26.4
